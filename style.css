@@ -225,13 +225,17 @@ main {
   position: relative;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .track-cell.empty {
   background: rgba(255, 255, 255, 0.02);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   opacity: 0.24;
+}
+
+.track-label-text {
+  white-space: nowrap;
 }
 
 .track-cell.spot {

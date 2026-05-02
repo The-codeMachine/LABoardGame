@@ -117,9 +117,6 @@ const diceResult = document.getElementById('diceResult');
 const diceCube = document.getElementById('diceCube');
 const resultSummary = document.getElementById('resultSummary');
 const restartBtn = document.getElementById('restartBtn');
-const playerImageModal = document.getElementById('playerImageModal');
-const playerImageInputs = document.getElementById('playerImageInputs');
-const confirmImagesBtn = document.getElementById('confirmImagesBtn');
 const winnerBanner = document.getElementById('winnerBanner');
 
 // Ensure the result panel is hidden initially
@@ -162,34 +159,6 @@ function initGame() {
   resultScreen.classList.add('hidden');
   gameScreen.classList.remove('hidden');
 
-  showImageModal();
-}
-
-function showImageModal() {
-  playerImageInputs.innerHTML = '';
-
-  players.forEach((player, index) => {
-    const group = document.createElement('div');
-    group.className = 'image-input-group';
-    group.innerHTML = `
-      <label>${player.name}</label>
-      <input type="url" placeholder="Enter image URL (optional)" data-player-index="${index}">
-    `;
-    playerImageInputs.appendChild(group);
-  });
-
-  playerImageModal.showModal();
-}
-
-function startGameWithImages() {
-  const inputs = playerImageInputs.querySelectorAll('input[type="url"]');
-  inputs.forEach(input => {
-    const index = parseInt(input.dataset.playerIndex);
-    players[index].imageUrl = input.value.trim();
-  });
-
-  playerImageModal.close();
-
   renderTrack();
   updateUI();
   renderRoster();
@@ -220,10 +189,7 @@ function rollDice() {
 
 function movePlayer(steps) {
   const player = players[currentPlayerIndex];
-
-  // Endurance affects movement
-  const bonus = Math.floor(player.endurance / 5);
-  const totalMove = steps + bonus;
+  const totalMove = steps;
 
   const nextPosition = player.position + totalMove;
 
@@ -459,10 +425,8 @@ playerForm.addEventListener('submit', event => {
 
 addPlayerBtn.addEventListener('click', addPlayerInput);
 rollBtn.addEventListener('click', rollDice);
-confirmImagesBtn.addEventListener('click', startGameWithImages);
 
 restartBtn.addEventListener('click', () => {
-  playerImageModal.close();
   startScreen.classList.remove('hidden');
   gameScreen.classList.add('hidden');
   resultScreen.classList.add('hidden');
