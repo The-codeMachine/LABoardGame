@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moral Path</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <section class="start-screen" id="startScreen">
+      <h1>Moral Path</h1>
+      <p>Enter 2 to 4 names to begin your journey.</p>
+      <form id="playerForm">
+        <div class="player-inputs" id="playerInputs">
+          <label>
+            Player 1
+            <input type="text" name="playerName" placeholder="Name" required>
+          </label>
+          <label>
+            Player 2
+            <input type="text" name="playerName" placeholder="Name" required>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="addPlayerBtn">Add Player</button>
+          <button type="submit" class="primary">Start Game</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="game-screen hidden" id="gameScreen">
+      <main class="game-layout">
+        <aside class="sidebar">
+          <header class="player-bar">
+            <div class="player-title">
+              <span class="player-badge" id="currentPlayerBadge"></span>
+              <div>
+                <span class="label">Current</span>
+                <strong id="currentPlayerName">Player</strong>
+              </div>
+            </div>
+            <div>
+              <span class="label">Survival</span>
+              <strong id="currentSurvival">10</strong>
+            </div>
+            <div>
+              <span class="label">Humanity</span>
+              <strong id="currentHumanity">10</strong>
+            </div>
+            <div>
+              <span class="label">Endurance</span>
+              <strong id="currentEndurance">10</strong>
+            </div>
+            <div>
+              <span class="label">Resolve</span>
+              <strong id="currentResolve">10</strong>
+            </div>
+          </header>
+          <div class="player-roster" id="playerRoster"></div>
+
+          <section class="event-panel">
+            <div class="event-box">
+              <h2>Event</h2>
+              <p id="eventText">Roll the dice to begin your choice.</p>
+              <div class="choices" id="choices"></div>
+            </div>
+          </section>
+        </aside>
+
+        <div class="board-column">
+          <section class="track-panel">
+            <div class="track" id="track"></div>
+          </section>
+
+          <footer class="action-panel">
+            <div class="dice-display">
+              <span>Dice result</span>
+              <div class="dice-cube" id="diceCube">
+                <span id="diceResult">-</span>
+              </div>
+            </div>
+            <button id="rollBtn" class="primary">Roll Dice</button>
+          </footer>
+        </div>
+      </main>
+    </section>
+
+    <section class="result-screen hidden" id="resultScreen">
+      <div class="result-overlay">
+        <div class="result-content">
+          <h1>Journey Complete</h1>
+          <div class="winner-banner" id="winnerBanner"></div>
+          <div class="result-summary" id="resultSummary"></div>
+          <button id="restartBtn" class="primary">Play Again</button>
+        </div>
+      </div>
+    </section>
+
+    <dialog id="playerImageModal" class="player-image-modal">
+      <div class="modal-content">
+        <h2>Customize Player Images</h2>
+        <p>Enter image URLs for each player (optional)</p>
+        <div id="playerImageInputs"></div>
+        <div class="modal-actions">
+          <button id="confirmImagesBtn" class="primary">Start Game</button>
+        </div>
+      </div>
+    </dialog>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
