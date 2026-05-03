@@ -4,16 +4,22 @@ This is a board game made using HTML/JS/CSS for an LA project. This explores the
 
 ## How to play
 
-There is a ship voyage. It consists of 20 steps throughtout the voyage. As you move through these steps there will be events that occur. 
-There events affect how the player will end the game, and their stats. The player will have a choice for these events. 
+This will provide a basic overview of how to play, however there is a ```RULES.md``` for a deeper dive. 
 
-There is not maximum players, and there must at least be one player. 
+There must be at least 2 players, with a maximum of 4 players. 
+
+Each turn:
+- The player will role their dice
+- Move that many squares up
+- Make a decision based off the event presented at that square
+
+Win conditions:
+- Win by completing one full lap while maintaining the highest combined score in your three core stats.
 
 ## Installation
 
-You must clone everything inside the ```src/``` directory. You must put it inside any folder, they must all be inside the same directory.
-
-You have to open ```index.html``` using an browser of your choice. Everything should load properly.
+To install this correctly you simply must download the ```index.html```, ```script.js```, and ```styles.css```. After downloading all of them, put them
+into one folder. Inside this folder double click index.html, and open with a browser of your choice (e.g. Chrome, or Edge).
 
 ## Contact
 
