@@ -463,10 +463,14 @@ function getTrackPath() {
   const width = 10;
   const height = 7;
 
-  for (let x = 0; x < width; x++) path.push([0, x]);
-  for (let y = 1; y < height - 1; y++) path.push([y, width - 1]);
-  for (let x = width - 1; x >= 0; x--) path.push([height - 1, x]);
-  for (let y = height - 2; y > 0; y--) path.push([y, 0]);
+  // Top row: 7 positions (0-6)
+  for (let x = 0; x < 7; x++) path.push([0, x]);
+  // Right column: 3 positions (7-9)
+  for (let y = 1; y <= 3; y++) path.push([y, 6]);
+  // Bottom row: 7 positions (10-16)
+  for (let x = 6; x >= 0; x--) path.push([4, x]);
+  // Left column: 3 positions (17-19)
+  for (let y = 3; y >= 1; y--) path.push([y, 0]);
 
   return path;
 }
@@ -512,10 +516,16 @@ function renderTrack() {
           const inner = document.createElement('div');
           inner.className = 'track-dot-inner';
 
-          playersHere.forEach(player => {
-            const marker = document.createElement('span');
+          playersHere.forEach((player, index) => {
+            const marker = document.createElement('video');
             marker.className = 'track-dot-player';
-            marker.style.background = player.color;
+            marker.src = 'resources/player.mp4';
+            marker.autoplay = true;
+            marker.loop = true;
+            marker.muted = true;
+            marker.style.borderColor = player.color;
+            marker.style.boxShadow = `0 0 8px rgba(0, 0, 0, 0.18), 0 0 12px ${player.color}40`;
+            marker.setAttribute('data-player-number', (players.indexOf(player) + 1).toString());
             inner.appendChild(marker);
           });
 
