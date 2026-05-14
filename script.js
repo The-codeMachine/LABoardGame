@@ -1,7 +1,7 @@
-const players = [];
+﻿const players = [];
 const playerColors = ['#7c3aed', '#22d3ee', '#f97316', '#14b8a6'];
 
-const boardSize = 20;
+const boardSize = 28;
 const winningLaps = 1;
 
 // Board spaces: Each position maps directly to a specific event (not recycled)
@@ -199,6 +199,86 @@ const boardSpaces = [
       { text: "Return to your old life changed", survival: +1, humanity: +1, resolve: +1 },
       { text: "Dedicate yourself to justice", survival: 0, humanity: +3, resolve: +3 },
       { text: "Try to forget and move on", survival: +2, humanity: -1, resolve: -2 }
+    ]
+  },
+  {
+    position: 20,
+    text: "Weeks at sea. A storm approaches and the crew scrambles. You must choose your role.",
+    type: 'physical',
+    choices: [
+      { text: "Secure the sails", risky: true, survival: +1, humanity: +1, resolve: +1 },
+      { text: "Help the terrified captives", survival: 0, humanity: +2, resolve: +1 },
+      { text: "Hide and save energy", survival: +2, humanity: -1, resolve: -1 }
+    ]
+  },
+  {
+    position: 21,
+    text: "A fellow crew member falls ill and is thrown into the hold as 'unfit.' You recognize them.",
+    type: 'mental',
+    choices: [
+      { text: "Speak up for them", risky: true, survival: -2, humanity: +2, resolve: +2 },
+      { text: "Pretend you don't know them", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Leave them medicine secretly", risky: true, survival: -1, humanity: +1, resolve: +1 }
+    ]
+  },
+  {
+    position: 22,
+    text: "The captain orders you to witness a punishment. Disobeying means the whip turns on you.",
+    type: 'moral',
+    choices: [
+      { text: "Witness and stay silent", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Show mercy in your expression", survival: 0, humanity: +1, resolve: 0 },
+      { text: "Refuse to look", risky: true, survival: -1, humanity: +2, resolve: +2 }
+    ]
+  },
+  {
+    position: 23,
+    text: "You find a captive trying to rig a signal to shore. They're almost caught.",
+    type: 'physical',
+    choices: [
+      { text: "Help them finish", risky: true, survival: -2, humanity: +3, resolve: +2 },
+      { text: "Ignore it completely", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Distract the guards so they escape", risky: true, survival: -1, humanity: +2, resolve: +1 }
+    ]
+  },
+  {
+    position: 24,
+    text: "A child asks why they're trapped. The crew says to hit them if they cry again. What do you do?",
+    type: 'mental',
+    choices: [
+      { text: "Comfort the child quietly", risky: true, survival: -1, humanity: +3, resolve: +1 },
+      { text: "Say nothing to avoid trouble", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Tell them a story instead", survival: 0, humanity: +2, resolve: +1 }
+    ]
+  },
+  {
+    position: 25,
+    text: "The ship docks for supplies. You catch a glimpse of land and freedom so close.",
+    type: 'physical',
+    choices: [
+      { text: "Plan an immediate escape", risky: true, survival: -1, humanity: -1, resolve: +2 },
+      { text: "Wait for a better moment", survival: +1, humanity: +1, resolve: 0 },
+      { text: "Help others prepare to run", risky: true, survival: -2, humanity: +3, resolve: +1 }
+    ]
+  },
+  {
+    position: 26,
+    text: "Another musician is brought aboard to replace a dead captive. You lock eyes. Recognition, fear, shame.",
+    type: 'mental',
+    choices: [
+      { text: "Offer them a glimmer of hope", risky: true, survival: 0, humanity: +2, resolve: +1 },
+      { text: "Look away to protect yourself", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Teach them a secret resistance song", risky: true, survival: -1, humanity: +2, resolve: +2 }
+    ]
+  },
+  {
+    position: 27,
+    text: "You overhear guards discussing selling the ship's cargo to the highest bidder. More lives in the hold.",
+    type: 'moral',
+    choices: [
+      { text: "Warn the captives", risky: true, survival: -1, humanity: +2, resolve: +1 },
+      { text: "Say nothing and avoid involvement", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Try to interfere with the sale", risky: true, survival: -2, humanity: +3, resolve: +2 }
     ]
   }
 ];
@@ -460,17 +540,15 @@ function checkGameEnd() {
 
 function getTrackPath() {
   const path = [];
-  const width = 10;
-  const height = 7;
-
-  // Top row: 7 positions (0-6)
-  for (let x = 0; x < 7; x++) path.push([0, x]);
-  // Right column: 3 positions (7-9)
-  for (let y = 1; y <= 3; y++) path.push([y, 6]);
-  // Bottom row: 7 positions (10-16)
-  for (let x = 6; x >= 0; x--) path.push([4, x]);
-  // Left column: 3 positions (17-19)
-  for (let y = 3; y >= 1; y--) path.push([y, 0]);
+  
+  // Top row: 10 positions (0-9)
+  for (let x = 0; x < 10; x++) path.push([0, x]);
+  // Right column: 5 positions (10-14)
+  for (let y = 1; y <= 5; y++) path.push([y, 9]);
+  // Bottom row: 9 positions (15-23)
+  for (let x = 8; x >= 0; x--) path.push([5, x]);
+  // Left column: 4 positions (24-27)
+  for (let y = 4; y >= 1; y--) path.push([y, 0]);
 
   return path;
 }
@@ -479,14 +557,14 @@ function renderTrack() {
   track.innerHTML = '';
 
   const path = getTrackPath();
-  const grid = Array.from({ length: 7 }, () => Array(10).fill(null));
+  const grid = Array.from({ length: 6 }, () => Array(10).fill(null));
 
   path.forEach((pos, index) => {
     const [row, col] = pos;
     grid[row][col] = index;
   });
 
-  for (let r = 0; r < 7; r++) {
+  for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 10; c++) {
       const cell = document.createElement('div');
       const index = grid[r][c];

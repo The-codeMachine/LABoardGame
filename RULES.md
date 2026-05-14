@@ -65,7 +65,7 @@ Players journey through a 20-space board representing the voyage aboard a slave 
 Some choices are marked with **⚠** and indicate danger. If you choose a risky option:
 
 **Failure Chance Formula:**
-- Base failure chance: **60% − (Stat × 3%)**
+- Base failure chance: **60% − (Stat × 3%)**, minimum 10%
 - Where "Stat" is the most relevant stat (Survival for physical, Resolve for mental, Humanity for moral)
 - Examples:
   - Survival 5 = 45% failure chance
