@@ -31,7 +31,9 @@ body {
 }
 
 .app-shell {
-  width: min(980px, 100%);
+  width: min(1300px, 100%);
+  max-width: 100%;
+  overflow-x: auto;
   padding: 24px;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -188,6 +190,8 @@ button:hover {
 
 main {
   display: grid;
+  min-width: 0;
+  width: 100%;
   gap: 22px;
 }
 
@@ -208,12 +212,14 @@ main {
 .track {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
-  grid-template-rows: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 10px;
-  width: min(680px, 100%);
+  min-width: 900px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  background: transparent;
   border-radius: 28px;
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
@@ -222,6 +228,7 @@ main {
   min-height: 72px;
   padding: 10px;
   border-radius: 18px;
+  min-width: 70px;
   position: relative;
   display: grid;
   place-items: center;
@@ -231,7 +238,7 @@ main {
 .track-cell.empty {
   background: rgba(255, 255, 255, 0.02);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-  opacity: 0.24;
+  opacity: 1.0;
 }
 
 .track-label-text {
@@ -239,9 +246,9 @@ main {
 }
 
 .track-cell.spot {
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.88));
+  background: rgba(15, 23, 42, 0.3);
   border: 1px solid rgba(124, 58, 237, 0.24);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  box-shadow: none;
 }
 
 .track-cell.spot.current {
@@ -385,7 +392,8 @@ main {
 
 .game-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(900px, 1fr);
+  min-width: 0;
   gap: 20px;
   height: 100%;
 }
@@ -410,30 +418,35 @@ main {
 }
 
 .track {
-  background: transparent !important;
-  border: none !important;
-  background-image: var(--board-bg);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 900px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 14px;
+  background: transparent;
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .track-cell.empty {
-  background: transparent !important;
-  box-shadow: none !important;
-  opacity: 0 !important;
-  pointer-events: none;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  opacity: 0;
 }
 
 .track-cell.spot {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: rgba(15, 23, 42, 0.3);
+  border: 2px solid rgba(124, 58, 237, 0.24);
+  box-shadow: none;
 }
 
 .track-cell.spot.current {
-  border: none !important;
-  box-shadow: none !important;
+  border-color: rgba(249, 115, 22, 0.8);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25), 0 12px 22px rgba(0, 0, 0, 0.22);
 }
 
 .track-number {
@@ -591,8 +604,10 @@ main {
   .result-content h1 {
     font-size: 1.8rem;
   }
-  
-  .winner-banner {
-    font-size: 1.4rem;
+}
+
+@media (min-width: 1025px) {
+  .app-shell {
+    min-width: 1300px;
   }
 }

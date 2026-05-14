@@ -18,8 +18,9 @@ Win conditions:
 
 ## Installation
 
-To install this correctly you simply must download the ```index.html```, ```script.js```, and ```styles.css```. After downloading all of them, put them
-into one folder. Inside this folder double click index.html, and open with a browser of your choice (e.g. Chrome, or Edge).
+To install this correctly you simply must download all files from the repository (including the `resources/` folder). Put them into one folder. Inside this folder double click `index.html`, and open with a modern browser (e.g. Chrome, Edge, Firefox).
+
+**Requirements:** Modern browser with JavaScript enabled. No additional dependencies.
 
 ## Contact
 

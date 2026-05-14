@@ -24,7 +24,7 @@
 **Normal choice** → Apply changes shown  
 **Risky choice (⚠)** → May fail based on your stats
 
-**Failure chance = 60% − (Your Stat × 3%)**  
+**Failure chance = 60% − (Your Stat × 3%)**, minimum 10%  
 Example: If your Survival is 8, failure chance = 60 − 24 = **36%**
 
 If you fail:
