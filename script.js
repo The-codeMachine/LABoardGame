@@ -8,277 +8,309 @@ const winningLaps = 1;
 const boardSpaces = [
   {
     position: 0,
-    text: "The captain orders you to play your fiddle while the ship carries stolen lives below deck. Do you obey, resist, or try to send a signal through the music?",
-    type: 'moral',
+    text: "Captain Cawthorne orders you to play the fife while captives are forced to dance on deck for exercise.",
+    type: "moral",
     choices: [
-      { text: "Obey to stay alive", survival: +2, humanity: -2, resolve: -1 },
-      { text: "Play a hidden signal", risky: true, survival: -1, humanity: +2, resolve: +2 },
-      { text: "Refuse to play", risky: true, survival: -2, humanity: +1, resolve: +1 }
+      { text: "Play exactly as ordered", survival: +2, humanity: -2, resolve: -1 },
+      { text: "Slow the rhythm to ease their suffering", risky: true, survival: -1, humanity: +2, resolve: +1 },
+      { text: "Refuse to play", risky: true, survival: -3, humanity: +1, resolve: +2 }
     ]
   },
+
   {
     position: 1,
-    text: "You hear suffering from the hold and know the crew expects silence. Do you look away or try to help?",
-    type: 'mental',
+    text: "A sailor asks whether you are getting used to the smell from the hold.",
+    type: "mental",
     choices: [
-      { text: "Keep silent", survival: +1, humanity: -2, resolve: -1 },
-      { text: "Slip water to a captive", risky: true, survival: -1, humanity: +3, resolve: +1 },
-      { text: "Warn a captive of danger", risky: true, survival: -1, humanity: +2, resolve: +2 }
+      { text: "Pretend it no longer bothers you", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Admit it makes you sick", survival: -1, humanity: +1, resolve: +1 },
+      { text: "Stay silent", survival: 0, humanity: 0, resolve: 0 }
     ]
   },
+
   {
     position: 2,
-    text: "A sailor offers extra food if you report what you hear aboard the ship. Do you take the deal?",
-    type: 'moral',
+    text: "A captive collapses during the forced dancing while the crew laughs.",
+    type: "moral",
     choices: [
-      { text: "Take the deal", survival: +2, humanity: -2, resolve: -1 },
-      { text: "Refuse the offer", survival: 0, humanity: +1, resolve: +2 }
+      { text: "Keep playing", survival: +2, humanity: -3, resolve: -2 },
+      { text: "Pause your music briefly", risky: true, survival: -1, humanity: +2, resolve: +1 },
+      { text: "Rush to help them", risky: true, survival: -3, humanity: +3, resolve: +2 }
     ]
   },
+
   {
     position: 3,
-    text: "The sea turns rough, and the ship pitches hard. Do you help secure the rigging or stay hidden below?",
-    type: 'physical',
+    text: "Late at night, you hear singing from below deck that reminds you of home.",
+    type: "mental",
     choices: [
-      { text: "Help with the rigging", risky: true, survival: +1, humanity: +1, resolve: +1 },
-      { text: "Stay hidden below", survival: +2, humanity: -1, resolve: -1 }
+      { text: "Listen quietly", humanity: +1, resolve: +1, survival: 0 },
+      { text: "Join softly with your fife", risky: true, survival: -1, humanity: +2, resolve: +2 },
+      { text: "Cover your ears and sleep", survival: +1, humanity: -1, resolve: -1 }
     ]
   },
+
   {
     position: 4,
-    text: "A captive quietly asks whether freedom is still possible. Do you answer honestly?",
-    type: 'moral',
+    text: "Sharks follow the ship closely. A sailor explains why they never leave.",
+    type: "mental",
     choices: [
-      { text: "Offer hope", survival: -1, humanity: +3, resolve: +2 },
-      { text: "Give a hard truth", survival: 0, humanity: +1, resolve: +1 },
-      { text: "Say nothing", survival: +1, humanity: -1, resolve: -1 }
+      { text: "Look overboard anyway", humanity: +1, resolve: +1, survival: -1 },
+      { text: "Walk away immediately", survival: +1, humanity: -1, resolve: 0 },
+      { text: "Ask questions about the dead", risky: true, survival: -1, humanity: +2, resolve: +1 }
     ]
   },
+
   {
     position: 5,
-    text: "The crew is distracted and you see a chance to help someone escape their chains. Do you risk it?",
-    type: 'physical',
+    text: "A violent storm floods the lower deck and panic spreads through the hold.",
+    type: "physical",
     choices: [
-      { text: "Try to help", risky: true, survival: -2, humanity: +3, resolve: +2 },
-      { text: "Stay out of it", survival: +1, humanity: -1, resolve: -1 }
+      { text: "Help secure the ship", risky: true, survival: +2, humanity: 0, resolve: +1 },
+      { text: "Help trapped captives", risky: true, survival: -2, humanity: +3, resolve: +2 },
+      { text: "Hide and protect yourself", survival: +1, humanity: -1, resolve: -1 }
     ]
   },
+
   {
     position: 6,
-    text: "You are forced to perform again, but your hands shake from hunger and fear. Push through or let it falter?",
-    type: 'physical',
+    text: "You realize the crew speaks about people below deck as if they are cargo, not human beings.",
+    type: "mental",
     choices: [
-      { text: "Force the performance", risky: true, survival: +1, humanity: -1, resolve: +1 },
-      { text: "Let the song falter", survival: -1, humanity: +1, resolve: +2 }
+      { text: "Accept their thinking to survive", survival: +2, humanity: -3, resolve: -2 },
+      { text: "Fight against becoming numb", humanity: +2, resolve: +2, survival: -1 },
+      { text: "Avoid thinking about it", survival: +1, humanity: -1, resolve: 0 }
     ]
   },
+
   {
     position: 7,
-    text: "Disease spreads through the ship. The crew expects selfishness. Do you share scarce supplies?",
-    type: 'moral',
+    text: "A dying captive grabs your wrist and whispers something you cannot understand.",
+    type: "mental",
     choices: [
-      { text: "Share supplies", risky: true, survival: -1, humanity: +3, resolve: +1 },
-      { text: "Keep them for yourself", survival: +2, humanity: -2, resolve: -1 }
+      { text: "Stay beside them", humanity: +3, resolve: +1, survival: -1 },
+      { text: "Pull away quickly", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Repeat the words back softly", humanity: +2, resolve: +2, survival: 0 }
     ]
   },
+
   {
     position: 8,
-    text: "You catch a crew member showing weakness. Do you exploit it, ignore it, or protect someone else?",
-    type: 'mental',
+    text: "The crew offers you extra food for reporting which captives seem rebellious.",
+    type: "moral",
     choices: [
-      { text: "Exploit the weakness", survival: +2, humanity: -2, resolve: -1 },
-      { text: "Ignore it", survival: 0, humanity: +1, resolve: 0 },
-      { text: "Use it to protect someone", risky: true, survival: -1, humanity: +2, resolve: +2 }
+      { text: "Accept the deal", survival: +2, humanity: -3, resolve: -1 },
+      { text: "Refuse outright", humanity: +2, resolve: +2, survival: -1 },
+      { text: "Pretend to cooperate but lie", risky: true, survival: 0, humanity: +1, resolve: +1 }
     ]
   },
+
   {
     position: 9,
-    text: "A musician like you among the captives was once free. They beg for a note of real music. Will you risk playing something true?",
-    type: 'mental',
-    choices: [
-      { text: "Play something honest", risky: true, survival: -1, humanity: +2, resolve: +2 },
-      { text: "Play safe melodies", survival: +1, humanity: -1, resolve: -1 },
-      { text: "Play what brings them peace", risky: true, survival: 0, humanity: +3, resolve: +1 }
-    ]
-  },
-  {
-    position: 10,
-    text: "Food runs low. A child in the hold cries constantly. You have a hidden portion. Do you give it?",
-    type: 'moral',
-    choices: [
-      { text: "Give everything", survival: -2, humanity: +3, resolve: +2 },
-      { text: "Give a small amount", survival: -1, humanity: +1, resolve: +1 },
-      { text: "Keep it hidden", survival: +2, humanity: -2, resolve: -1 }
-    ]
-  },
-  {
-    position: 11,
-    text: "The captain demands you identify which captive spoke out of turn. If you refuse, you face punishment. If you comply, someone dies.",
-    type: 'moral',
-    choices: [
-      { text: "Refuse and face punishment", risky: true, survival: -2, humanity: +2, resolve: +3 },
-      { text: "Comply with the order", survival: +2, humanity: -3, resolve: -2 },
-      { text: "Name someone already dying", risky: true, survival: 0, humanity: -1, resolve: 0 }
-    ]
-  },
-  {
-    position: 12,
-    text: "A fever takes you. You could recover quickly if you take medicine meant for the sick captives. No one would know.",
-    type: 'moral',
-    choices: [
-      { text: "Take the medicine", survival: +2, humanity: -2, resolve: -1 },
-      { text: "Leave it for others", risky: true, survival: -2, humanity: +2, resolve: +2 },
-      { text: "Share it equally", survival: -1, humanity: +1, resolve: +1 }
-    ]
-  },
-  {
-    position: 13,
-    text: "A crew member plans an escape. They ask you to look away during the attempt. They will likely fail and be executed.",
-    type: 'physical',
-    choices: [
-      { text: "Look away and let them try", risky: true, survival: -1, humanity: +2, resolve: +2 },
-      { text: "Report the plan", survival: +2, humanity: -3, resolve: -1 },
-      { text: "Warn them it will fail", survival: 0, humanity: 0, resolve: +1 }
-    ]
-  },
-  {
-    position: 14,
-    text: "Land is visible. You could slip away now, but so could others. Do you stay and help others reach shore, or save yourself?",
-    type: 'physical',
-    choices: [
-      { text: "Save yourself", survival: +2, humanity: -2, resolve: -1 },
-      { text: "Help guide others", risky: true, survival: -1, humanity: +3, resolve: +2 },
-      { text: "Create a diversion for escape", risky: true, survival: 0, humanity: +1, resolve: +2 }
-    ]
-  },
-  {
-    position: 15,
-    text: "A captive recognizes you as someone who once showed them kindness. They refuse to leave the ship without you.",
-    type: 'mental',
-    choices: [
-      { text: "Go with them", risky: true, survival: -2, humanity: +3, resolve: +3 },
-      { text: "Tell them to go alone", survival: +1, humanity: -1, resolve: -2 },
-      { text: "Help them escape but stay", risky: true, survival: 0, humanity: +2, resolve: +1 }
-    ]
-  },
-  {
-    position: 16,
-    text: "Chaos erupts during the escape attempt. Guards are confused. You could slip away unnoticed. What do you do?",
-    type: 'physical',
-    choices: [
-      { text: "Escape in the chaos", survival: +2, humanity: -1, resolve: -1 },
-      { text: "Help confused captives find the way", risky: true, survival: -2, humanity: +3, resolve: +2 },
-      { text: "Create more chaos to cover them", risky: true, survival: -1, humanity: +2, resolve: +2 }
-    ]
-  },
-  {
-    position: 17,
-    text: "You reach the shore with others. The ship disappears behind you. Do you run inland, help the wounded, or return to warn others?",
-    type: 'moral',
-    choices: [
-      { text: "Run inland and disappear", survival: +3, humanity: -2, resolve: 0 },
-      { text: "Help the wounded", survival: -1, humanity: +3, resolve: +2 },
-      { text: "Find a boat to warn others", risky: true, survival: -2, humanity: +2, resolve: +3 }
-    ]
-  },
-  {
-    position: 18,
-    text: "Free at last, but the weight of the voyage remains. Do you speak out about what you witnessed, or try to forget?",
-    type: 'mental',
-    choices: [
-      { text: "Speak the truth publicly", risky: true, survival: -1, humanity: +3, resolve: +3 },
-      { text: "Share only with those you trust", survival: 0, humanity: +1, resolve: +1 },
-      { text: "Keep it buried inside", survival: +2, humanity: -2, resolve: -1 }
-    ]
-  },
-  {
-    position: 19,
-    text: "You have reached home. Your journey is complete. But can you ever truly return?",
-    type: 'moral',
-    choices: [
-      { text: "Return to your old life changed", survival: +1, humanity: +1, resolve: +1 },
-      { text: "Dedicate yourself to justice", survival: 0, humanity: +3, resolve: +3 },
-      { text: "Try to forget and move on", survival: +2, humanity: -1, resolve: -2 }
-    ]
-  },
-  {
-    position: 20,
-    text: "Weeks at sea. A storm approaches and the crew scrambles. You must choose your role.",
-    type: 'physical',
-    choices: [
-      { text: "Secure the sails", risky: true, survival: +1, humanity: +1, resolve: +1 },
-      { text: "Help the terrified captives", survival: 0, humanity: +2, resolve: +1 },
-      { text: "Hide and save energy", survival: +2, humanity: -1, resolve: -1 }
-    ]
-  },
-  {
-    position: 21,
-    text: "A fellow crew member falls ill and is thrown into the hold as 'unfit.' You recognize them.",
-    type: 'mental',
-    choices: [
-      { text: "Speak up for them", risky: true, survival: -2, humanity: +2, resolve: +2 },
-      { text: "Pretend you don't know them", survival: +1, humanity: -2, resolve: -1 },
-      { text: "Leave them medicine secretly", risky: true, survival: -1, humanity: +1, resolve: +1 }
-    ]
-  },
-  {
-    position: 22,
-    text: "The captain orders you to witness a punishment. Disobeying means the whip turns on you.",
-    type: 'moral',
-    choices: [
-      { text: "Witness and stay silent", survival: +1, humanity: -1, resolve: -1 },
-      { text: "Show mercy in your expression", survival: 0, humanity: +1, resolve: 0 },
-      { text: "Refuse to look", risky: true, survival: -1, humanity: +2, resolve: +2 }
-    ]
-  },
-  {
-    position: 23,
-    text: "You find a captive trying to rig a signal to shore. They're almost caught.",
-    type: 'physical',
-    choices: [
-      { text: "Help them finish", risky: true, survival: -2, humanity: +3, resolve: +2 },
-      { text: "Ignore it completely", survival: +1, humanity: -1, resolve: -1 },
-      { text: "Distract the guards so they escape", risky: true, survival: -1, humanity: +2, resolve: +1 }
-    ]
-  },
-  {
-    position: 24,
-    text: "A child asks why they're trapped. The crew says to hit them if they cry again. What do you do?",
-    type: 'mental',
+    text: "A child cries through the night, and the crew threatens punishment if the noise continues.",
+    type: "mental",
     choices: [
       { text: "Comfort the child quietly", risky: true, survival: -1, humanity: +3, resolve: +1 },
-      { text: "Say nothing to avoid trouble", survival: +1, humanity: -1, resolve: -1 },
-      { text: "Tell them a story instead", survival: 0, humanity: +2, resolve: +1 }
+      { text: "Ignore the crying", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Play a soft tune to calm them", humanity: +2, resolve: +1, survival: 0 }
     ]
   },
+
+  {
+    position: 10,
+    text: "You are ordered to watch a public whipping as a warning to everyone aboard.",
+    type: "moral",
+    choices: [
+      { text: "Watch silently", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Look away", risky: true, survival: -1, humanity: +2, resolve: +1 },
+      { text: "Speak against it", risky: true, survival: -3, humanity: +3, resolve: +2 }
+    ]
+  },
+
+  {
+    position: 11,
+    text: "Disease spreads rapidly below deck, and the smell of sickness fills the ship.",
+    type: "physical",
+    choices: [
+      { text: "Avoid the sick completely", survival: +2, humanity: -2, resolve: -1 },
+      { text: "Bring water to the ill", risky: true, survival: -1, humanity: +3, resolve: +1 },
+      { text: "Help clean the hold", risky: true, survival: -2, humanity: +2, resolve: +2 }
+    ]
+  },
+
+  {
+    position: 12,
+    text: "One sailor admits he once hated slavers too, but says survival changed him.",
+    type: "mental",
+    choices: [
+      { text: "Agree with him", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Challenge his excuse", risky: true, survival: -2, humanity: +2, resolve: +2 },
+      { text: "Say nothing and listen", humanity: +1, resolve: +1, survival: 0 }
+    ]
+  },
+
+  {
+    position: 13,
+    text: "The ship passes another slave vessel drifting silently in the fog.",
+    type: "mental",
+    choices: [
+      { text: "Stare at it in horror", humanity: +2, resolve: +1, survival: -1 },
+      { text: "Pretend not to notice", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Ask what happened aboard", risky: true, humanity: +1, resolve: +2, survival: -1 }
+    ]
+  },
+
+  {
+    position: 14,
+    text: "A captive secretly asks you whether freedom truly exists beyond the ocean.",
+    type: "moral",
+    choices: [
+      { text: "Promise freedom exists", humanity: +3, resolve: +2, survival: -1 },
+      { text: "Tell the harsh truth", humanity: +1, resolve: +1, survival: 0 },
+      { text: "Stay silent", survival: +1, humanity: -1, resolve: -1 }
+    ]
+  },
+
+  {
+    position: 15,
+    text: "You begin dreaming of chains and drowning every night.",
+    type: "mental",
+    choices: [
+      { text: "Confide in someone", humanity: +1, resolve: +2, survival: -1 },
+      { text: "Hide your fear", survival: +1, humanity: -1, resolve: -1 },
+      { text: "Force yourself awake and stay alert", resolve: +1, survival: 0, humanity: 0 }
+    ]
+  },
+
+  {
+    position: 16,
+    text: "The captain praises you for keeping order through music.",
+    type: "moral",
+    choices: [
+      { text: "Accept the praise", survival: +2, humanity: -2, resolve: -1 },
+      { text: "Feel ashamed but say nothing", humanity: +1, resolve: +1, survival: 0 },
+      { text: "Reject the compliment", risky: true, survival: -2, humanity: +2, resolve: +2 }
+    ]
+  },
+
+  {
+    position: 17,
+    text: "You catch two captives quietly planning resistance.",
+    type: "moral",
+    choices: [
+      { text: "Report them", survival: +2, humanity: -3, resolve: -2 },
+      { text: "Keep their secret", risky: true, survival: -1, humanity: +2, resolve: +2 },
+      { text: "Warn them they may fail", humanity: +1, resolve: +1, survival: 0 }
+    ]
+  },
+
+  {
+    position: 18,
+    text: "Food supplies begin running dangerously low during the voyage.",
+    type: "physical",
+    choices: [
+      { text: "Hide extra food for yourself", survival: +2, humanity: -2, resolve: -1 },
+      { text: "Share what little you have", humanity: +3, resolve: +1, survival: -2 },
+      { text: "Take only what you need", survival: +1, humanity: +1, resolve: 0 }
+    ]
+  },
+
+  {
+    position: 19,
+    text: "You hear chains rattling in the dark and realize someone is attempting escape.",
+    type: "physical",
+    choices: [
+      { text: "Alert the crew", survival: +2, humanity: -3, resolve: -1 },
+      { text: "Pretend not to notice", humanity: +1, resolve: +1, survival: 0 },
+      { text: "Help cover the noise", risky: true, survival: -2, humanity: +3, resolve: +2 }
+    ]
+  },
+
+  {
+    position: 20,
+    text: "The crew jokes about selling families separately once the ship reaches port.",
+    type: "mental",
+    choices: [
+      { text: "Laugh weakly along", survival: +1, humanity: -3, resolve: -2 },
+      { text: "Walk away in disgust", humanity: +2, resolve: +1, survival: -1 },
+      { text: "Argue with the sailors", risky: true, survival: -2, humanity: +2, resolve: +2 }
+    ]
+  },
+
+  {
+    position: 21,
+    text: "A sailor is thrown overboard after dying from fever. The sharks appear instantly.",
+    type: "mental",
+    choices: [
+      { text: "Watch silently", survival: 0, humanity: -1, resolve: -1 },
+      { text: "Look away in horror", humanity: +1, resolve: +1, survival: 0 },
+      { text: "Pray quietly for the dead", humanity: +2, resolve: +2, survival: -1 }
+    ]
+  },
+
+  {
+    position: 22,
+    text: "Land finally appears faintly on the horizon after weeks at sea.",
+    type: "physical",
+    choices: [
+      { text: "Focus only on your own escape", survival: +2, humanity: -2, resolve: 0 },
+      { text: "Think about helping others escape", humanity: +2, resolve: +2, survival: -1 },
+      { text: "Fear what awaits on shore", humanity: +1, resolve: -1, survival: 0 }
+    ]
+  },
+
+  {
+    position: 23,
+    text: "A captive recognizes you as the boy who played music during the dancing.",
+    type: "mental",
+    choices: [
+      { text: "Apologize quietly", humanity: +2, resolve: +2, survival: -1 },
+      { text: "Defend yourself angrily", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Say nothing", humanity: -1, resolve: 0, survival: 0 }
+    ]
+  },
+
+  {
+    position: 24,
+    text: "Chaos erupts as captives attempt to overpower several crew members.",
+    type: "physical",
+    choices: [
+      { text: "Help the crew restore order", survival: +2, humanity: -3, resolve: -2 },
+      { text: "Help the captives escape", risky: true, survival: -3, humanity: +3, resolve: +3 },
+      { text: "Hide until it ends", survival: +1, humanity: -1, resolve: -1 }
+    ]
+  },
+
   {
     position: 25,
-    text: "The ship docks for supplies. You catch a glimpse of land and freedom so close.",
-    type: 'physical',
+    text: "You finally step onto shore, but the memories of the voyage follow you.",
+    type: "mental",
     choices: [
-      { text: "Plan an immediate escape", risky: true, survival: -1, humanity: -1, resolve: +2 },
-      { text: "Wait for a better moment", survival: +1, humanity: +1, resolve: 0 },
-      { text: "Help others prepare to run", risky: true, survival: -2, humanity: +3, resolve: +1 }
+      { text: "Try to forget everything", survival: +1, humanity: -2, resolve: -2 },
+      { text: "Speak openly about what happened", risky: true, humanity: +3, resolve: +3, survival: -1 },
+      { text: "Carry the guilt silently", humanity: +1, resolve: +1, survival: 0 }
     ]
   },
+
   {
     position: 26,
-    text: "Another musician is brought aboard to replace a dead captive. You lock eyes. Recognition, fear, shame.",
-    type: 'mental',
+    text: "People back home ask what life at sea was like.",
+    type: "moral",
     choices: [
-      { text: "Offer them a glimmer of hope", risky: true, survival: 0, humanity: +2, resolve: +1 },
-      { text: "Look away to protect yourself", survival: +1, humanity: -1, resolve: -1 },
-      { text: "Teach them a secret resistance song", risky: true, survival: -1, humanity: +2, resolve: +2 }
+      { text: "Tell them only pleasant stories", survival: +1, humanity: -2, resolve: -1 },
+      { text: "Describe the horrors honestly", risky: true, humanity: +3, resolve: +2, survival: -1 },
+      { text: "Refuse to speak about it", humanity: 0, resolve: -1, survival: +1 }
     ]
   },
+
   {
     position: 27,
-    text: "You overhear guards discussing selling the ship's cargo to the highest bidder. More lives in the hold.",
-    type: 'moral',
+    text: "Even years later, the sound of waves reminds you of the ship and the voices below deck.",
+    type: "mental",
     choices: [
-      { text: "Warn the captives", risky: true, survival: -1, humanity: +2, resolve: +1 },
-      { text: "Say nothing and avoid involvement", survival: +1, humanity: -2, resolve: -1 },
-      { text: "Try to interfere with the sale", risky: true, survival: -2, humanity: +3, resolve: +2 }
+      { text: "Dedicate your life to justice", humanity: +3, resolve: +3, survival: 0 },
+      { text: "Try to live quietly with the memories", humanity: +1, resolve: +1, survival: +1 },
+      { text: "Bury the memories completely", survival: +2, humanity: -2, resolve: -2 }
     ]
   }
 ];
