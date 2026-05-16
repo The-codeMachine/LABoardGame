@@ -318,6 +318,8 @@ const boardSpaces = [
 let currentPlayerIndex = 0;
 let diceValue = 0;
 let gameActive = false;
+let playerReachedShore = null; // Track who reached shore first
+let shorePlayerExtraTurnDone = false; // Track if they had their extra turn
 
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
@@ -351,6 +353,8 @@ function initGame() {
   currentPlayerIndex = 0;
   diceValue = 0;
   gameActive = true;
+  playerReachedShore = null;
+  shorePlayerExtraTurnDone = false;
 
   const formData = new FormData(playerForm);
   const names = Array.from(formData.getAll('playerName'))
@@ -361,7 +365,6 @@ function initGame() {
     players.push({
       name: name || `Player ${index + 1}`,
       position: 0,
-      laps: 0,
       survival: 10,
       humanity: 10,
       resolve: 10,
@@ -413,8 +416,14 @@ function movePlayer(steps) {
   const player = players[currentPlayerIndex];
   const nextPosition = player.position + steps;
 
-  player.laps += Math.floor(nextPosition / boardSize);
-  player.position = nextPosition % boardSize;
+  // Cap movement at the last square (position 27)
+  const maxPosition = boardSize - 1;
+  player.position = Math.min(nextPosition, maxPosition);
+
+  // Track who reaches shore first
+  if (player.position === maxPosition && playerReachedShore === null) {
+    playerReachedShore = currentPlayerIndex;
+  }
 
   renderTrack();
 
@@ -507,6 +516,7 @@ function applyChoice(eventData, choiceIndex) {
 
   updateUI();
 
+  // Check for game end - especially after shore player's extra turn
   if (checkGameEnd()) {
     gameActive = false;
     showResults();
@@ -546,8 +556,7 @@ function renderRoster() {
         <span class="player-dot" style="background:${player.color}"></span>
         <strong>${player.name}</strong>
       </div>
-      <div class="player-chip">Position: ${player.position + 1}</div>
-      <div class="player-chip">Laps: ${player.laps}</div>
+      <div class="player-chip">Position: ${player.position + 1} / 28</div>
       <div class="player-chip">Survival: ${player.survival}</div>
       <div class="player-chip">Humanity: ${player.humanity}</div>
       <div class="player-chip">Resolve: ${player.resolve}</div>
@@ -559,7 +568,33 @@ function renderRoster() {
 }
 
 function nextTurn(message) {
+  // If someone reached shore and this is their extra turn time
+  if (playerReachedShore !== null && currentPlayerIndex !== playerReachedShore && !shorePlayerExtraTurnDone) {
+    const shorePlayerName = players[playerReachedShore].name;
+    currentPlayerIndex = playerReachedShore;
+    updateUI();
+    eventText.textContent = `${shorePlayerName} reached the shore first and gets an extra turn!`;
+    choicesContainer.innerHTML = '';
+    rollBtn.disabled = false;
+    return;
+  }
+
   currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  
+  // Special handling: if shore player just finished their extra turn, give them one more action
+  if (playerReachedShore !== null && !shorePlayerExtraTurnDone) {
+    // Check if we need to redirect to shore player for extra turn
+    if (currentPlayerIndex !== playerReachedShore) {
+      const shorePlayerName = players[playerReachedShore].name;
+      currentPlayerIndex = playerReachedShore;
+      updateUI();
+      eventText.textContent = `${shorePlayerName} reached the shore first and gets an extra turn! Roll the dice.`;
+      choicesContainer.innerHTML = '';
+      rollBtn.disabled = false;
+      return;
+    }
+  }
+
   updateUI();
   eventText.textContent = message || `Ready for ${players[currentPlayerIndex].name}. Roll the dice.`;
   choicesContainer.innerHTML = '';
@@ -567,7 +602,24 @@ function nextTurn(message) {
 }
 
 function checkGameEnd() {
-  return players.some(player => player.laps >= winningLaps);
+  // If no one has reached shore yet, game continues
+  if (playerReachedShore === null) {
+    return false;
+  }
+
+  // If the player who reached shore is taking their extra turn now
+  if (currentPlayerIndex === playerReachedShore && !shorePlayerExtraTurnDone) {
+    // They just finished their choice, so mark extra turn as done
+    shorePlayerExtraTurnDone = true;
+    return false; // Let them see the results message before ending
+  }
+
+  // After the shore player's extra turn is complete, end the game on the next turn check
+  if (shorePlayerExtraTurnDone) {
+    return true;
+  }
+
+  return false;
 }
 
 function getTrackPath() {
@@ -653,21 +705,38 @@ function showResults() {
   gameScreen.classList.add('hidden');
   resultScreen.classList.remove('hidden');
 
-  // Final score = Survival + Humanity + Resolve (3 stats only)
+  const shorePlayer = playerReachedShore !== null ? players[playerReachedShore] : null;
   const totalScore = p => p.survival + p.humanity + p.resolve;
-  const bestTotal = Math.max(...players.map(totalScore));
-  const winnerPlayers = players.filter(p => totalScore(p) === bestTotal);
-  const winners = winnerPlayers.map(p => p.name).join(', ');
 
-  winnerBanner.innerHTML = `${winners} ${winnerPlayers.length > 1 ? 'reach the shore together' : 'reaches the shore'}`;
+  let winnerBannerText = '';
+  let finalStatsText = '';
 
-  const finalStats = players.map(p => 
+  if (shorePlayer) {
+    // The player who reached shore first is the winner
+    winnerBannerText = `${shorePlayer.name} reaches the shore first and wins the game!`;
+    const shoreScore = totalScore(shorePlayer);
+    finalStatsText = `${shorePlayer.name}: Survival ${shorePlayer.survival}, Humanity ${shorePlayer.humanity}, Resolve ${shorePlayer.resolve} (Total: ${shoreScore})`;
+  } else {
+    // Fallback: shouldn't happen but just in case
+    const bestTotal = Math.max(...players.map(totalScore));
+    const winnerPlayers = players.filter(p => totalScore(p) === bestTotal);
+    const winners = winnerPlayers.map(p => p.name).join(', ');
+    winnerBannerText = `${winners} ${winnerPlayers.length > 1 ? 'reach the shore together' : 'reaches the shore'}`;
+    finalStatsText = players.map(p => 
+      `${p.name}: Survival ${p.survival}, Humanity ${p.humanity}, Resolve ${p.resolve} (Total: ${totalScore(p)})`
+    ).join(' · ');
+  }
+
+  winnerBanner.innerHTML = winnerBannerText;
+
+  // Show all players' final stats for reference
+  const allStats = players.map(p => 
     `${p.name}: Survival ${p.survival}, Humanity ${p.humanity}, Resolve ${p.resolve} (Total: ${totalScore(p)})`
   ).join(' · ');
 
   resultSummary.innerHTML = `
-    <div><strong>Winner's Score:</strong> ${bestTotal}</div>
-    <div><strong>Final Stats:</strong> ${finalStats}</div>
+    <div><strong>Winner:</strong> ${shorePlayer ? shorePlayer.name : 'N/A'}</div>
+    <div><strong>Final Stats:</strong> ${allStats}</div>
   `;
 }
 
@@ -694,4 +763,6 @@ restartBtn.addEventListener('click', () => {
   resultScreen.classList.add('hidden');
   rollBtn.disabled = false;
   playerForm.reset();
+  playerReachedShore = null;
+  shorePlayerExtraTurnDone = false;
 });
