@@ -27,14 +27,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
+  min-height: 100vh;
+  padding: 18px;
+  overflow-x: hidden;
 }
 
 .app-shell {
-  width: min(1300px, 100%);
+  width: min(1300px, calc(100vw - 36px));
   max-width: 100%;
-  overflow-x: auto;
-  padding: 24px;
+  padding: 18px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -214,7 +215,6 @@ main {
   grid-template-columns: repeat(10, minmax(0, 1fr));
   grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 10px;
-  min-width: 900px;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
@@ -225,10 +225,10 @@ main {
 }
 
 .track-cell {
-  min-height: 72px;
+  min-height: 64px;
   padding: 10px;
   border-radius: 18px;
-  min-width: 70px;
+  min-width: 60px;
   position: relative;
   display: grid;
   place-items: center;
@@ -290,6 +290,7 @@ main {
   border-radius: 50%;
   border: 1px solid rgba(15, 23, 42, 0.9);
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
+  background: currentColor;
 }
 
 .action-panel {
@@ -392,17 +393,57 @@ main {
 
 .game-layout {
   display: grid;
-  grid-template-columns: 320px minmax(900px, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   min-width: 0;
   gap: 20px;
   height: 100%;
 }
 
+@media (max-width: 1120px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .track {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+
+  .app-shell {
+    padding: 14px;
+  }
+
+  .track {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .track-cell {
+    min-height: 52px;
+    min-width: 0;
+  }
+
+  .player-bar,
+  .action-panel,
+  .event-box {
+    padding: 14px;
+  }
+
+  .player-card {
+    padding: 12px;
+  }
+}
+
 .sidebar {
   display: grid;
   gap: 18px;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  overflow: visible;
+  max-height: none;
 }
 
 .board-column {
@@ -422,7 +463,6 @@ main {
   grid-template-columns: repeat(10, minmax(0, 1fr));
   grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 10px;
-  min-width: 900px;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;

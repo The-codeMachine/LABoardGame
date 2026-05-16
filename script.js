@@ -685,6 +685,7 @@ function renderTrack() {
             marker.autoplay = true;
             marker.loop = true;
             marker.muted = true;
+            marker.playsInline = true;
             marker.style.borderColor = player.color;
             marker.style.boxShadow = `0 0 8px rgba(0, 0, 0, 0.18), 0 0 12px ${player.color}40`;
             marker.setAttribute('data-player-number', (players.indexOf(player) + 1).toString());
