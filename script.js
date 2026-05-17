@@ -7,6 +7,9 @@ const gameState = {
   currentPlayerIndex: 0,
   gameActive: false,
   winnerIndex: null,
+  endgameTriggered: false,
+  shorePlayerIndex: null,
+  finalTurnsRemaining: new Set(),
 
   phase: 'idle', // idle | rolling | resolving | gameover
 
@@ -443,22 +446,58 @@ function getCurrentPlayer() {
   return gameState.players[gameState.currentPlayerIndex];
 }
 
+
 function nextTurn(message = '') {
+
   if (!gameState.gameActive) {
     return;
   }
 
-  gameState.currentPlayerIndex =
-    (gameState.currentPlayerIndex + 1) % gameState.players.length;
+  // ENDGAME MODE
+  if (gameState.endgameTriggered) {
+
+    gameState.finalTurnsRemaining.delete(
+      gameState.currentPlayerIndex
+    );
+
+    // Everyone finished
+    if (gameState.finalTurnsRemaining.size === 0) {
+      endGame();
+      return;
+    }
+
+    // Find next remaining player
+    let next =
+      (gameState.currentPlayerIndex + 1) %
+      gameState.players.length;
+
+    while (
+      !gameState.finalTurnsRemaining.has(next)
+    ) {
+      next =
+        (next + 1) %
+        gameState.players.length;
+    }
+
+    gameState.currentPlayerIndex = next;
+  }
+  else {
+
+    gameState.currentPlayerIndex =
+      (gameState.currentPlayerIndex + 1) %
+      gameState.players.length;
+  }
 
   gameState.phase = 'rolling';
 
   updateUI();
 
   eventText.textContent =
-    message || `Ready for ${getCurrentPlayer().name}. Roll the dice.`;
+    message ||
+    `Ready for ${getCurrentPlayer().name}. Roll the dice.`;
 
   choicesContainer.innerHTML = '';
+
   rollBtn.disabled = false;
 }
 
@@ -505,6 +544,7 @@ function rollDice() {
 // =========================
 
 function movePlayer(steps) {
+  
   const player = getCurrentPlayer();
 
   const maxPosition = gameState.boardSize - 1;
@@ -517,11 +557,27 @@ function movePlayer(steps) {
 
   renderTrack();
 
-  // ENDGAME
-  if (player.position >= maxPosition) {
-    gameState.winnerIndex = gameState.currentPlayerIndex;
-    endGame();
-    return;
+  // Trigger endgame only ONCE
+  if (
+    player.position >= maxPosition &&
+    !gameState.endgameTriggered
+  ) {
+
+    gameState.endgameTriggered = true;
+    gameState.shorePlayerIndex =
+      gameState.currentPlayerIndex;
+
+    // Everyone except shore player
+    gameState.finalTurnsRemaining = new Set(
+      gameState.players
+        .map((_, index) => index)
+        .filter(index =>
+          index !== gameState.shorePlayerIndex
+        )
+    );
+
+    eventText.textContent =
+      `${player.name} reached the shore first. All other players get one final turn.`;
   }
 
   const eventData = getEvent(player.position);
@@ -879,6 +935,30 @@ function renderTrack() {
 // ENDGAME
 // =========================
 
+function getWinner() {
+
+  let bestPlayer = gameState.players[0];
+  let bestScore = totalScore(bestPlayer);
+
+  for (const player of gameState.players) {
+
+    const score = totalScore(player);
+
+    // Shore bonus
+    const adjustedScore =
+      player === gameState.players[gameState.shorePlayerIndex]
+        ? score + 2
+        : score;
+
+    if (adjustedScore > bestScore) {
+      bestScore = adjustedScore;
+      bestPlayer = player;
+    }
+  }
+
+  return bestPlayer;
+}
+
 function endGame() {
   gameState.gameActive = false;
   gameState.phase = 'gameover';
@@ -887,7 +967,7 @@ function endGame() {
   resultScreen.classList.remove('hidden');
 
   const winner =
-    gameState.players[gameState.winnerIndex];
+    getWinner();
 
   winnerBanner.textContent =
     `${winner.name} reached the shore first.`;
