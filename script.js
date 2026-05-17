@@ -1,10 +1,28 @@
-﻿const players = [];
-const playerColors = ['#7c3aed', '#22d3ee', '#f97316', '#14b8a6'];
+﻿// =========================
+// GAME STATE
+// =========================
 
-const boardSize = 28;
-const winningLaps = 1;
+const gameState = {
+  players: [],
+  currentPlayerIndex: 0,
+  gameActive: false,
+  winnerIndex: null,
+  endgameTriggered: false,
+  shorePlayerIndex: null,
+  finalTurnsRemaining: new Set(),
 
-// Board spaces: Each position maps directly to a specific event (not recycled)
+  phase: 'idle', // idle | rolling | resolving | gameover
+
+  boardSize: 28,
+  maxStat: 15,
+
+  playerColors: ['#7c3aed', '#22d3ee', '#f97316', '#14b8a6']
+};
+
+// =========================
+// BOARD DATA
+// =========================
+
 const boardSpaces = [
   {
     position: 0,
@@ -315,324 +333,528 @@ const boardSpaces = [
   }
 ];
 
-let currentPlayerIndex = 0;
-let diceValue = 0;
-let gameActive = false;
-let playerReachedShore = null; // Track who reached shore first
-let shorePlayerExtraTurnDone = false; // Track if they had their extra turn
+// =========================
+// DOM
+// =========================
 
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
 const resultScreen = document.getElementById('resultScreen');
+
 const playerForm = document.getElementById('playerForm');
 const playerInputs = document.getElementById('playerInputs');
 const addPlayerBtn = document.getElementById('addPlayerBtn');
+
 const currentPlayerBadge = document.getElementById('currentPlayerBadge');
 const currentPlayerName = document.getElementById('currentPlayerName');
 const currentSurvival = document.getElementById('currentSurvival');
 const currentHumanity = document.getElementById('currentHumanity');
 const currentResolve = document.getElementById('currentResolve');
+
 const track = document.getElementById('track');
 const playerRoster = document.getElementById('playerRoster');
+
 const eventText = document.getElementById('eventText');
 const choicesContainer = document.getElementById('choices');
+
 const rollBtn = document.getElementById('rollBtn');
 const diceResult = document.getElementById('diceResult');
 const diceCube = document.getElementById('diceCube');
+
 const resultSummary = document.getElementById('resultSummary');
 const restartBtn = document.getElementById('restartBtn');
 const winnerBanner = document.getElementById('winnerBanner');
 
-// Ensure the result panel is hidden initially
-resultScreen.classList.add('hidden');
-gameScreen.classList.add('hidden');
-startScreen.classList.remove('hidden');
+// =========================
+// HELPERS
+// =========================
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function createElement(tag, className, text) {
+  const el = document.createElement(tag);
+
+  if (className) {
+    el.className = className;
+  }
+
+  if (text !== undefined) {
+    el.textContent = text;
+  }
+
+  return el;
+}
+
+function totalScore(player) {
+  return player.survival + player.humanity + player.resolve;
+}
+
+// =========================
+// INITIALIZATION
+// =========================
 
 function initGame() {
-  players.length = 0;
-  currentPlayerIndex = 0;
-  diceValue = 0;
-  gameActive = true;
-  playerReachedShore = null;
-  shorePlayerExtraTurnDone = false;
+  gameState.players = [];
+  gameState.currentPlayerIndex = 0;
+  gameState.gameActive = true;
+  gameState.winnerIndex = null;
+  gameState.phase = 'rolling';
 
   const formData = new FormData(playerForm);
+
   const names = Array.from(formData.getAll('playerName'))
     .map(name => name.trim())
     .filter(Boolean);
 
+  if (names.length < 2) {
+    alert('Please add at least two players.');
+    return;
+  }
+
   names.forEach((name, index) => {
-    players.push({
-      name: name || `Player ${index + 1}`,
+    gameState.players.push({
+      name,
       position: 0,
+
       survival: 10,
       humanity: 10,
       resolve: 10,
+
       riskLevel: 0,
-      color: playerColors[index % playerColors.length],
+
+      color: gameState.playerColors[index % gameState.playerColors.length]
     });
   });
-
-  if (players.length < 2) {
-    alert('Please add at least two players.');
-    gameActive = false;
-    return;
-  }
 
   startScreen.classList.add('hidden');
   resultScreen.classList.add('hidden');
   gameScreen.classList.remove('hidden');
 
-  renderTrack();
-  updateUI();
-  renderRoster();
+  renderAll();
+
   eventText.textContent = 'The voyage begins. Roll the dice.';
   choicesContainer.innerHTML = '';
 }
 
-function rollDice() {
-  if (!gameActive) return;
+// =========================
+// TURN SYSTEM
+// =========================
 
-  diceResult.textContent = '-';
-  diceCube.classList.add('rolling');
-  rollBtn.disabled = true;
-
-  let ticks = 0;
-  const roller = setInterval(() => {
-    const face = Math.floor(Math.random() * 6) + 1;
-    diceResult.textContent = face;
-
-    if (++ticks >= 10) {
-      clearInterval(roller);
-      diceCube.classList.remove('rolling');
-      diceValue = face;
-      diceResult.textContent = face;
-      movePlayer(face);
-    }
-  }, 75);
+function getCurrentPlayer() {
+  return gameState.players[gameState.currentPlayerIndex];
 }
 
-function movePlayer(steps) {
-  const player = players[currentPlayerIndex];
-  const nextPosition = player.position + steps;
 
-  // Cap movement at the last square (position 27)
-  const maxPosition = boardSize - 1;
-  player.position = Math.min(nextPosition, maxPosition);
+function nextTurn(message = '') {
 
-  // Track who reaches shore first
-  if (player.position === maxPosition && playerReachedShore === null) {
-    playerReachedShore = currentPlayerIndex;
-  }
-
-  renderTrack();
-
-  const eventData = getEvent(player.position);
-  renderEvent(eventData);
-}
-
-function getEvent(position) {
-  // Map position directly to boardSpaces array
-  if (position < boardSpaces.length) {
-    return boardSpaces[position];
-  }
-  // Fallback if position exceeds board (shouldn't happen with proper lap logic)
-  return boardSpaces[position % boardSpaces.length];
-}
-
-function renderEvent(eventData) {
-  eventText.textContent = eventData.text;
-  choicesContainer.innerHTML = '';
-
-  if (!Array.isArray(eventData.choices) || eventData.choices.length === 0) {
-    nextTurn('The voyage continues...');
+  if (!gameState.gameActive) {
     return;
   }
 
-  // All choices are always available - no disabling logic
+  // ENDGAME MODE
+  if (gameState.endgameTriggered) {
+
+    gameState.finalTurnsRemaining.delete(
+      gameState.currentPlayerIndex
+    );
+
+    // Everyone finished
+    if (gameState.finalTurnsRemaining.size === 0) {
+      endGame();
+      return;
+    }
+
+    // Find next remaining player
+    let next =
+      (gameState.currentPlayerIndex + 1) %
+      gameState.players.length;
+
+    while (
+      !gameState.finalTurnsRemaining.has(next)
+    ) {
+      next =
+        (next + 1) %
+        gameState.players.length;
+    }
+
+    gameState.currentPlayerIndex = next;
+  }
+  else {
+
+    gameState.currentPlayerIndex =
+      (gameState.currentPlayerIndex + 1) %
+      gameState.players.length;
+  }
+
+  gameState.phase = 'rolling';
+
+  updateUI();
+
+  eventText.textContent =
+    message ||
+    `Ready for ${getCurrentPlayer().name}. Roll the dice.`;
+
+  choicesContainer.innerHTML = '';
+
+  rollBtn.disabled = false;
+}
+
+// =========================
+// DICE
+// =========================
+
+function rollDice() {
+  if (!gameState.gameActive) {
+    return;
+  }
+
+  if (gameState.phase !== 'rolling') {
+    return;
+  }
+
+  gameState.phase = 'animating';
+
+  rollBtn.disabled = true;
+
+  let ticks = 0;
+
+  const roller = setInterval(() => {
+    const face = Math.floor(Math.random() * 6) + 1;
+
+    diceResult.textContent = face;
+
+    ticks++;
+
+    if (ticks >= 10) {
+      clearInterval(roller);
+
+      diceCube.classList.remove('rolling');
+
+      movePlayer(face);
+    }
+  }, 75);
+
+  diceCube.classList.add('rolling');
+}
+
+// =========================
+// MOVEMENT
+// =========================
+
+function movePlayer(steps) {
+  
+  const player = getCurrentPlayer();
+
+  const maxPosition = gameState.boardSize - 1;
+
+  player.position = clamp(
+    player.position + steps,
+    0,
+    maxPosition
+  );
+
+  renderTrack();
+
+  // Trigger endgame only ONCE
+  if (
+    player.position >= maxPosition &&
+    !gameState.endgameTriggered
+  ) {
+
+    gameState.endgameTriggered = true;
+    gameState.shorePlayerIndex =
+      gameState.currentPlayerIndex;
+
+    // Everyone except shore player
+    gameState.finalTurnsRemaining = new Set(
+      gameState.players
+        .map((_, index) => index)
+        .filter(index =>
+          index !== gameState.shorePlayerIndex
+        )
+    );
+
+    eventText.textContent =
+      `${player.name} reached the shore first. All other players get one final turn.`;
+  }
+
+  const eventData = getEvent(player.position);
+
+  renderEvent(eventData);
+}
+
+// =========================
+// EVENTS
+// =========================
+
+function getEvent(position) {
+  return boardSpaces[position];
+}
+
+function renderEvent(eventData) {
+  gameState.phase = 'resolving';
+
+  eventText.textContent = eventData.text;
+
+  choicesContainer.innerHTML = '';
+
   eventData.choices.forEach((choice, choiceIndex) => {
     const button = document.createElement('button');
+
     button.type = 'button';
     button.className = 'choice-btn';
 
     const deltas = [];
-    if (choice.survival) deltas.push(`${choice.survival > 0 ? '+' : ''}${choice.survival} S`);
-    if (choice.humanity) deltas.push(`${choice.humanity > 0 ? '+' : ''}${choice.humanity} H`);
-    if (choice.resolve) deltas.push(`${choice.resolve > 0 ? '+' : ''}${choice.resolve} R`);
 
-    button.textContent = `${choice.text}${deltas.length ? ` (${deltas.join(', ')})` : ''}${choice.risky ? ' ⚠' : ''}`;
-    if (choice.risky) {
-      button.title = 'This choice involves risk and may fail.';
+    if (choice.survival !== undefined) {
+      deltas.push(
+        `${choice.survival >= 0 ? '+' : ''}${choice.survival} S`
+      );
     }
 
-    button.addEventListener('click', () => applyChoice(eventData, choiceIndex));
+    if (choice.humanity !== undefined) {
+      deltas.push(
+        `${choice.humanity >= 0 ? '+' : ''}${choice.humanity} H`
+      );
+    }
+
+    if (choice.resolve !== undefined) {
+      deltas.push(
+        `${choice.resolve >= 0 ? '+' : ''}${choice.resolve} R`
+      );
+    }
+
+    button.textContent =
+      `${choice.text}` +
+      `${deltas.length ? ` (${deltas.join(', ')})` : ''}` +
+      `${choice.risky ? ' ⚠' : ''}`;
+
+    button.addEventListener('click', () => {
+      applyChoice(eventData, choiceIndex);
+    });
+
     choicesContainer.appendChild(button);
   });
 }
 
+// =========================
+// CHOICE APPLICATION
+// =========================
+
 function applyChoice(eventData, choiceIndex) {
-  const player = players[currentPlayerIndex];
-  const choice = eventData.choices[choiceIndex];
-
-  let failed = false;
-  if (choice.risky) {
-    // State-driven failure chance based on relevant stat
-    const relevantStat = 
-      eventData.type === 'physical' ? player.survival :
-      eventData.type === 'mental' ? player.resolve :
-      player.humanity;
-    
-    // Higher stat = lower failure chance
-    const failureChance = Math.max(10, 60 - (relevantStat * 3));
-    failed = Math.random() * 100 < failureChance;
-    
-    if (failed) {
-      // Add 1 to riskLevel for consequence accumulation
-      player.riskLevel = Math.min(10, player.riskLevel + 1);
-    }
-  }
-
-  // Apply choice stat changes
-  player.survival = Math.max(0, player.survival + (choice.survival || 0));
-  player.humanity = Math.max(0, player.humanity + (choice.humanity || 0));
-  player.resolve = Math.max(0, player.resolve + (choice.resolve || 0));
-
-  // If choice failed, reduce gains and add penalty
-  if (failed) {
-    player.survival = Math.max(0, player.survival - 1);
-    const relevantStat = eventData.type === 'physical' ? 'survival' : eventData.type === 'mental' ? 'resolve' : 'humanity';
-    player[relevantStat] = Math.max(0, player[relevantStat] - 1);
-  }
-
-  // State-driven consequence: Low humanity reduces resolve (moral weight)
-  if (player.humanity <= 3) {
-    player.resolve = Math.max(0, player.resolve - 1);
-  }
-
-  // State-driven consequence: High resolve helps survival slightly
-  if (player.resolve >= 8) {
-    player.survival = Math.min(15, player.survival + 1);
-  }
-
-  updateUI();
-
-  // Check for game end - especially after shore player's extra turn
-  if (checkGameEnd()) {
-    gameActive = false;
-    showResults();
+  if (gameState.phase !== 'resolving') {
     return;
   }
 
+  const player = getCurrentPlayer();
+
+  const choice = eventData.choices[choiceIndex];
+
+  let failed = false;
+
+  if (choice.risky) {
+    const relevantStat =
+      eventData.type === 'physical'
+        ? player.survival
+        : eventData.type === 'mental'
+          ? player.resolve
+          : player.humanity;
+
+    // Better scaling
+    const failureChance = clamp(
+      55 - (relevantStat * 4) + (player.riskLevel * 5),
+      5,
+      65
+    );
+
+    failed = Math.random() * 100 < failureChance;
+
+    if (failed) {
+      player.riskLevel = clamp(
+        player.riskLevel + 1,
+        0,
+        10
+      );
+    } else {
+      player.riskLevel = clamp(
+        player.riskLevel - 1,
+        0,
+        10
+      );
+    }
+  }
+
+  applyStats(player, choice);
+
+  if (failed) {
+    applyFailurePenalty(player, eventData);
+  }
+
+  applyStateConsequences(player);
+
+  updateUI();
+
   const message = failed
-    ? 'Your attempt backfires. The weight of survival grows heavier.'
-    : 'You move forward, but nothing feels certain anymore.';
+    ? 'Your attempt fails and leaves lasting consequences.'
+    : 'You continue forward through the voyage.';
 
   nextTurn(message);
 }
 
+function applyStats(player, choice) {
+  player.survival = clamp(
+    player.survival + (choice.survival ?? 0),
+    0,
+    gameState.maxStat
+  );
+
+  player.humanity = clamp(
+    player.humanity + (choice.humanity ?? 0),
+    0,
+    gameState.maxStat
+  );
+
+  player.resolve = clamp(
+    player.resolve + (choice.resolve ?? 0),
+    0,
+    gameState.maxStat
+  );
+}
+
+function applyFailurePenalty(player, eventData) {
+  const affectedStat =
+    eventData.type === 'physical'
+      ? 'survival'
+      : eventData.type === 'mental'
+        ? 'resolve'
+        : 'humanity';
+
+  player[affectedStat] =
+    clamp(player[affectedStat] - 2, 0, gameState.maxStat);
+
+  player.resolve =
+    clamp(player.resolve - 1, 0, gameState.maxStat);
+}
+
+function applyStateConsequences(player) {
+
+  // Low humanity damages resolve
+  if (player.humanity <= 3) {
+    player.resolve =
+      clamp(player.resolve - 1, 0, gameState.maxStat);
+  }
+
+  // Low resolve damages survival
+  if (player.resolve <= 2) {
+    player.survival =
+      clamp(player.survival - 1, 0, gameState.maxStat);
+  }
+
+  // High resolve slightly offsets stress
+  if (player.resolve >= 12 && player.humanity >= 8) {
+    player.survival =
+      clamp(player.survival + 1, 0, gameState.maxStat);
+  }
+}
+
+// =========================
+// UI
+// =========================
+
+function renderAll() {
+  renderTrack();
+  renderRoster();
+  updateUI();
+}
+
 function updateUI() {
-  const player = players[currentPlayerIndex];
+  const player = getCurrentPlayer();
+
   currentPlayerName.textContent = player.name;
   currentSurvival.textContent = player.survival;
   currentHumanity.textContent = player.humanity;
   currentResolve.textContent = player.resolve;
 
   currentPlayerBadge.style.background = player.color;
-  currentPlayerBadge.style.boxShadow = `0 0 14px ${player.color}`;
+  currentPlayerBadge.style.boxShadow =
+    `0 0 14px ${player.color}`;
 
   renderRoster();
-  rollBtn.disabled = !gameActive;
+
+  rollBtn.disabled =
+    !gameState.gameActive ||
+    gameState.phase !== 'rolling';
 }
+
+// =========================
+// ROSTER
+// =========================
 
 function renderRoster() {
   playerRoster.innerHTML = '';
 
-  players.forEach((player, index) => {
-    const card = document.createElement('div');
-    card.className = `player-card ${index === currentPlayerIndex ? 'current' : ''}`;
+  gameState.players.forEach((player, index) => {
 
-    card.innerHTML = `
-      <div class="player-card-header">
-        <span class="player-dot" style="background:${player.color}"></span>
-        <strong>${player.name}</strong>
-      </div>
-      <div class="player-chip">Position: ${player.position + 1} / 28</div>
-      <div class="player-chip">Survival: ${player.survival}</div>
-      <div class="player-chip">Humanity: ${player.humanity}</div>
-      <div class="player-chip">Resolve: ${player.resolve}</div>
-      <div class="player-chip">Score: ${player.survival + player.humanity + player.resolve}</div>
-    `;
+    const card = createElement(
+      'div',
+      `player-card ${index === gameState.currentPlayerIndex ? 'current' : ''}`
+    );
+
+    const header = createElement('div', 'player-card-header');
+
+    const dot = createElement('span', 'player-dot');
+    dot.style.background = player.color;
+
+    const strong = createElement('strong', null, player.name);
+
+    header.appendChild(dot);
+    header.appendChild(strong);
+
+    card.appendChild(header);
+
+    const stats = [
+      `Position: ${player.position + 1} / ${gameState.boardSize}`,
+      `Survival: ${player.survival}`,
+      `Humanity: ${player.humanity}`,
+      `Resolve: ${player.resolve}`,
+      `Risk: ${player.riskLevel}`,
+      `Score: ${totalScore(player)}`
+    ];
+
+    stats.forEach(stat => {
+      card.appendChild(
+        createElement('div', 'player-chip', stat)
+      );
+    });
 
     playerRoster.appendChild(card);
   });
 }
 
-function nextTurn(message) {
-  // If someone reached shore and this is their extra turn time
-  if (playerReachedShore !== null && currentPlayerIndex !== playerReachedShore && !shorePlayerExtraTurnDone) {
-    const shorePlayerName = players[playerReachedShore].name;
-    currentPlayerIndex = playerReachedShore;
-    updateUI();
-    eventText.textContent = `${shorePlayerName} reached the shore first and gets an extra turn!`;
-    choicesContainer.innerHTML = '';
-    rollBtn.disabled = false;
-    return;
-  }
-
-  currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-  
-  // Special handling: if shore player just finished their extra turn, give them one more action
-  if (playerReachedShore !== null && !shorePlayerExtraTurnDone) {
-    // Check if we need to redirect to shore player for extra turn
-    if (currentPlayerIndex !== playerReachedShore) {
-      const shorePlayerName = players[playerReachedShore].name;
-      currentPlayerIndex = playerReachedShore;
-      updateUI();
-      eventText.textContent = `${shorePlayerName} reached the shore first and gets an extra turn! Roll the dice.`;
-      choicesContainer.innerHTML = '';
-      rollBtn.disabled = false;
-      return;
-    }
-  }
-
-  updateUI();
-  eventText.textContent = message || `Ready for ${players[currentPlayerIndex].name}. Roll the dice.`;
-  choicesContainer.innerHTML = '';
-  rollBtn.disabled = false;
-}
-
-function checkGameEnd() {
-  // If no one has reached shore yet, game continues
-  if (playerReachedShore === null) {
-    return false;
-  }
-
-  // If the player who reached shore is taking their extra turn now
-  if (currentPlayerIndex === playerReachedShore && !shorePlayerExtraTurnDone) {
-    // They just finished their choice, so mark extra turn as done
-    shorePlayerExtraTurnDone = true;
-    return false; // Let them see the results message before ending
-  }
-
-  // After the shore player's extra turn is complete, end the game on the next turn check
-  if (shorePlayerExtraTurnDone) {
-    return true;
-  }
-
-  return false;
-}
+// =========================
+// TRACK
+// =========================
 
 function getTrackPath() {
   const path = [];
-  
-  // Top row: 10 positions (0-9)
-  for (let x = 0; x < 10; x++) path.push([0, x]);
-  // Right column: 5 positions (10-14)
-  for (let y = 1; y <= 5; y++) path.push([y, 9]);
-  // Bottom row: 9 positions (15-23)
-  for (let x = 8; x >= 0; x--) path.push([5, x]);
-  // Left column: 4 positions (24-27)
-  for (let y = 4; y >= 1; y--) path.push([y, 0]);
+
+  for (let x = 0; x < 10; x++) {
+    path.push([0, x]);
+  }
+
+  for (let y = 1; y <= 5; y++) {
+    path.push([y, 9]);
+  }
+
+  for (let x = 8; x >= 0; x--) {
+    path.push([5, x]);
+  }
+
+  for (let y = 4; y >= 1; y--) {
+    path.push([y, 0]);
+  }
 
   return path;
 }
@@ -641,59 +863,67 @@ function renderTrack() {
   track.innerHTML = '';
 
   const path = getTrackPath();
-  const grid = Array.from({ length: 6 }, () => Array(10).fill(null));
+
+  const grid = Array.from(
+    { length: 6 },
+    () => Array(10).fill(null)
+  );
 
   path.forEach((pos, index) => {
     const [row, col] = pos;
+
     grid[row][col] = index;
   });
 
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 10; c++) {
+
       const cell = document.createElement('div');
+
       const index = grid[r][c];
 
       if (index === null) {
         cell.className = 'track-cell empty';
-      } else {
-        cell.className = 'track-cell spot';
-        if (players.some(p => p.position === index)) {
-          cell.classList.add('current');
-        }
 
-        const number = document.createElement('div');
-        number.className = 'track-number';
-        number.textContent = index + 1;
-        cell.appendChild(number);
+        track.appendChild(cell);
 
-        if (index === 0 || index === boardSize - 1) {
-          const label = document.createElement('div');
-          label.className = 'track-label-text';
-          label.textContent = index === 0 ? 'Start' : 'End';
-          cell.appendChild(label);
-        }
+        continue;
+      }
 
-        const playersHere = players.filter(p => p.position === index);
-        if (playersHere.length) {
-          const inner = document.createElement('div');
-          inner.className = 'track-dot-inner';
+      cell.className = 'track-cell spot';
 
-          playersHere.forEach((player, index) => {
-            const marker = document.createElement('video');
-            marker.className = 'track-dot-player';
-            marker.src = 'resources/player.mp4';
-            marker.autoplay = true;
-            marker.loop = true;
-            marker.muted = true;
-            marker.playsInline = true;
-            marker.style.borderColor = player.color;
-            marker.style.boxShadow = `0 0 8px rgba(0, 0, 0, 0.18), 0 0 12px ${player.color}40`;
-            marker.setAttribute('data-player-number', (players.indexOf(player) + 1).toString());
-            inner.appendChild(marker);
-          });
+      const number = createElement(
+        'div',
+        'track-number',
+        index + 1
+      );
 
-          cell.appendChild(inner);
-        }
+      cell.appendChild(number);
+
+      const playersHere =
+        gameState.players.filter(
+          p => p.position === index
+        );
+
+      if (playersHere.length > 0) {
+
+        const inner =
+          createElement('div', 'track-dot-inner');
+
+        playersHere.forEach(player => {
+
+          const marker =
+            createElement('div', 'track-dot-player');
+
+          marker.style.borderColor = player.color;
+          marker.style.background = player.color;
+
+          marker.title = player.name;
+
+          inner.appendChild(marker);
+        });
+
+        cell.appendChild(inner);
       }
 
       track.appendChild(cell);
@@ -701,54 +931,131 @@ function renderTrack() {
   }
 }
 
-function showResults() {
-  gameActive = false;
+// =========================
+// ENDGAME
+// =========================
+
+function getWinner() {
+
+  let bestPlayer = gameState.players[0];
+  let bestScore = totalScore(bestPlayer);
+
+  for (const player of gameState.players) {
+
+    const score = totalScore(player);
+
+    // Shore bonus
+    const adjustedScore =
+      player === gameState.players[gameState.shorePlayerIndex]
+        ? score + 2
+        : score;
+
+    if (adjustedScore > bestScore) {
+      bestScore = adjustedScore;
+      bestPlayer = player;
+    }
+  }
+
+  return bestPlayer;
+}
+
+function endGame() {
+  gameState.gameActive = false;
+  gameState.phase = 'gameover';
+
   gameScreen.classList.add('hidden');
   resultScreen.classList.remove('hidden');
 
-  const shorePlayer = playerReachedShore !== null ? players[playerReachedShore] : null;
-  const totalScore = p => p.survival + p.humanity + p.resolve;
+  const winner =
+    getWinner();
 
-  let winnerBannerText = '';
-  let finalStatsText = '';
+  winnerBanner.textContent =
+    `${winner.name} reached the shore first.`;
 
-  if (shorePlayer) {
-    // The player who reached shore first is the winner
-    winnerBannerText = `${shorePlayer.name} reaches the shore first and wins the game!`;
-    const shoreScore = totalScore(shorePlayer);
-    finalStatsText = `${shorePlayer.name}: Survival ${shorePlayer.survival}, Humanity ${shorePlayer.humanity}, Resolve ${shorePlayer.resolve} (Total: ${shoreScore})`;
-  } else {
-    // Fallback: shouldn't happen but just in case
-    const bestTotal = Math.max(...players.map(totalScore));
-    const winnerPlayers = players.filter(p => totalScore(p) === bestTotal);
-    const winners = winnerPlayers.map(p => p.name).join(', ');
-    winnerBannerText = `${winners} ${winnerPlayers.length > 1 ? 'reach the shore together' : 'reaches the shore'}`;
-    finalStatsText = players.map(p => 
-      `${p.name}: Survival ${p.survival}, Humanity ${p.humanity}, Resolve ${p.resolve} (Total: ${totalScore(p)})`
-    ).join(' · ');
-  }
+  resultSummary.innerHTML = '';
 
-  winnerBanner.innerHTML = winnerBannerText;
+  const title =
+    createElement('div', null,
+      `Winner: ${winner.name}`
+    );
 
-  // Show all players' final stats for reference
-  const allStats = players.map(p => 
-    `${p.name}: Survival ${p.survival}, Humanity ${p.humanity}, Resolve ${p.resolve} (Total: ${totalScore(p)})`
-  ).join(' · ');
+  resultSummary.appendChild(title);
 
-  resultSummary.innerHTML = `
-    <div><strong>Winner:</strong> ${shorePlayer ? shorePlayer.name : 'N/A'}</div>
-    <div><strong>Final Stats:</strong> ${allStats}</div>
-  `;
+  gameState.players.forEach(player => {
+
+    const row = createElement(
+      'div',
+      'result-row'
+    );
+
+    row.textContent =
+      `${player.name} — ` +
+      `Survival ${player.survival}, ` +
+      `Humanity ${player.humanity}, ` +
+      `Resolve ${player.resolve}, ` +
+      `Risk ${player.riskLevel}, ` +
+      `Total ${totalScore(player)}`;
+
+    resultSummary.appendChild(row);
+  });
 }
+
+// =========================
+// PLAYER INPUTS
+// =========================
 
 function addPlayerInput() {
-  const currentCount = playerInputs.querySelectorAll('input[name="playerName"]').length;
-  if (currentCount >= 4) return;
+
+  const count =
+    playerInputs.querySelectorAll(
+      'input[name="playerName"]'
+    ).length;
+
+  if (count >= 4) {
+    return;
+  }
 
   const label = document.createElement('label');
-  label.innerHTML = `Player ${currentCount + 1}<input type="text" name="playerName" placeholder="Name">`;
+
+  label.appendChild(
+    document.createTextNode(`Player ${count + 1}`)
+  );
+
+  const input = document.createElement('input');
+
+  input.type = 'text';
+  input.name = 'playerName';
+  input.placeholder = 'Name';
+
+  label.appendChild(input);
+
   playerInputs.appendChild(label);
 }
+
+// =========================
+// RESTART
+// =========================
+
+function restartGame() {
+
+  playerForm.reset();
+
+  startScreen.classList.remove('hidden');
+  gameScreen.classList.add('hidden');
+  resultScreen.classList.add('hidden');
+
+  choicesContainer.innerHTML = '';
+
+  gameState.players = [];
+  gameState.currentPlayerIndex = 0;
+  gameState.gameActive = false;
+  gameState.phase = 'idle';
+  gameState.winnerIndex = null;
+}
+
+// =========================
+// EVENTS
+// =========================
 
 playerForm.addEventListener('submit', event => {
   event.preventDefault();
@@ -756,14 +1063,15 @@ playerForm.addEventListener('submit', event => {
 });
 
 addPlayerBtn.addEventListener('click', addPlayerInput);
+
 rollBtn.addEventListener('click', rollDice);
 
-restartBtn.addEventListener('click', () => {
-  startScreen.classList.remove('hidden');
-  gameScreen.classList.add('hidden');
-  resultScreen.classList.add('hidden');
-  rollBtn.disabled = false;
-  playerForm.reset();
-  playerReachedShore = null;
-  shorePlayerExtraTurnDone = false;
-});
+restartBtn.addEventListener('click', restartGame);
+
+// =========================
+// INITIAL SCREEN STATE
+// =========================
+
+startScreen.classList.remove('hidden');
+gameScreen.classList.add('hidden');
+resultScreen.classList.add('hidden');
