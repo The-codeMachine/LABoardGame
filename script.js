@@ -20,6 +20,42 @@ const gameState = {
 };
 
 // =========================
+// ASSETS / BACKGROUND
+// =========================
+
+// Configure available board backgrounds here. To force a specific
+// background, set `chosenBoard` to one of the entries below.
+const ASSETS = {
+  boardBackgrounds: [
+    'resources/board1.png'
+  ],
+  // Set to a path (like 'resources/board1.png') to force selection.
+  // Leave as `null` to randomly choose from `boardBackgrounds` on load.
+  chosenBoard: null
+};
+
+function setupBoardBackground() {
+  const trackEl = document.getElementById('track');
+  if (!trackEl) return;
+
+  let bg = ASSETS.chosenBoard;
+
+  if (!bg) {
+    const list = ASSETS.boardBackgrounds || [];
+    if (list.length === 0) return;
+    const idx = Math.floor(Math.random() * list.length);
+    bg = list[idx];
+  }
+
+  if (bg) {
+    trackEl.style.backgroundImage = `url("${bg}")`;
+    trackEl.style.backgroundSize = 'cover';
+    trackEl.style.backgroundPosition = 'center';
+    trackEl.style.backgroundRepeat = 'no-repeat';
+  }
+}
+
+// =========================
 // BOARD DATA
 // =========================
 
@@ -1075,3 +1111,5 @@ restartBtn.addEventListener('click', restartGame);
 startScreen.classList.remove('hidden');
 gameScreen.classList.add('hidden');
 resultScreen.classList.add('hidden');
+// Apply board background (random or forced via `ASSETS.chosenBoard`).
+setupBoardBackground();
