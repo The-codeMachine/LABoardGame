@@ -20,6 +20,42 @@ const gameState = {
 };
 
 // =========================
+// ASSETS / BACKGROUND
+// =========================
+
+// Configure available board backgrounds here. To force a specific
+// background, set `chosenBoard` to one of the entries below.
+const ASSETS = {
+  boardBackgrounds: [
+    'resources/board1.png'
+  ],
+  // Set to a path (like 'resources/board1.png') to force selection.
+  // Leave as `null` to randomly choose from `boardBackgrounds` on load.
+  chosenBoard: null
+};
+
+function setupBoardBackground() {
+  const trackEl = document.getElementById('track');
+  if (!trackEl) return;
+
+  let bg = ASSETS.chosenBoard;
+
+  if (!bg) {
+    const list = ASSETS.boardBackgrounds || [];
+    if (list.length === 0) return;
+    const idx = Math.floor(Math.random() * list.length);
+    bg = list[idx];
+  }
+
+  if (bg) {
+    trackEl.style.backgroundImage = `url("${bg}")`;
+    trackEl.style.backgroundSize = 'cover';
+    trackEl.style.backgroundPosition = 'center';
+    trackEl.style.backgroundRepeat = 'no-repeat';
+  }
+}
+
+// =========================
 // BOARD DATA
 // =========================
 
@@ -814,6 +850,8 @@ function renderRoster() {
 
     card.appendChild(header);
 
+    // roster videos removed — player model will appear on the board markers
+
     const stats = [
       `Position: ${player.position + 1} / ${gameState.boardSize}`,
       `Survival: ${player.survival}`,
@@ -912,15 +950,32 @@ function renderTrack() {
 
         playersHere.forEach(player => {
 
-          const marker =
-            createElement('div', 'track-dot-player');
+          const marker = createElement('div', 'track-dot-player');
 
-          marker.style.borderColor = player.color;
-          marker.style.background = player.color;
+            marker.style.borderColor = player.color;
+            // transparent fill — video will provide the visible content
+            marker.style.background = 'transparent';
 
-          marker.title = player.name;
+            marker.title = player.name;
 
-          inner.appendChild(marker);
+            // embed a small looping muted video inside the marker
+            try {
+              const vid = document.createElement('video');
+              vid.className = 'track-dot-video';
+              vid.src = 'resources/player.mp4';
+              vid.autoplay = true;
+              vid.loop = true;
+              vid.muted = true;
+              vid.playsInline = true;
+              vid.setAttribute('aria-hidden', 'true');
+              vid.style.pointerEvents = 'none';
+              marker.appendChild(vid);
+            } catch (e) {
+              // fallback to colored outline only
+              console.warn('track marker video failed', e);
+            }
+
+            inner.appendChild(marker);
         });
 
         cell.appendChild(inner);
@@ -1051,6 +1106,10 @@ function restartGame() {
   gameState.gameActive = false;
   gameState.phase = 'idle';
   gameState.winnerIndex = null;
+  // Reset endgame-related fields so a fresh play doesn't inherit previous results
+  gameState.endgameTriggered = false;
+  gameState.shorePlayerIndex = null;
+  gameState.finalTurnsRemaining = new Set();
 }
 
 // =========================
@@ -1075,3 +1134,5 @@ restartBtn.addEventListener('click', restartGame);
 startScreen.classList.remove('hidden');
 gameScreen.classList.add('hidden');
 resultScreen.classList.add('hidden');
+// Apply board background (random or forced via `ASSETS.chosenBoard`).
+setupBoardBackground();
