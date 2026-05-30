@@ -1,53 +1,57 @@
 # The Slave Dancer - Board Game Rules
 
 ## Overview
-Players journey through a 20-space board representing the voyage aboard a slave ship. The game focuses on moral and personal consequences—there are no "correct" answers, only difficult choices that shape who you become. Win by completing one full lap while maintaining the highest combined score in your three core stats.
+Players journey across a 28-space board representing a voyage aboard a ship. The game focuses on moral and personal consequences—there are no "correct" answers, only difficult choices that shape who you become. When a player reaches the final space the game enters endgame mode and final scoring determines the winner.
 
 ---
 
 ## Setup
-1. **2–4 players** each choose a color
+1. **2–4 players** each choose a color.
 2. Each player begins at **Space 1** with:
    - **Survival: 10**
    - **Humanity: 10**
    - **Resolve: 10**
-3. Place player markers on the Starting space
+   - **riskLevel: 0** (tracks how often risky choices are taken)
+3. Place player markers on the starting space.
+
+**Note:** The game enforces a `maxStat` of 15; stats are clamped between 0 and 15.
 
 ---
 
 ## Turn Structure (One Complete Turn Per Player)
 
-### Step 1: Roll the Dice
-- Roll a standard 6-sided die
-- Move your marker forward that many spaces
+### Step 1: Roll the Die
+- Roll a standard 6-sided die and move your marker forward that many spaces (the track uses 28 spaces).
 
 ### Step 2: Land on a Space & Trigger Event
-- Read the event card/text for that space aloud
-- You will face a **moral dilemma** with 2–3 choices
-- All choices are always available (none are locked)
+- Read the event text for that space aloud.
+- You will be presented with 2–3 choices (some may be marked **⚠ Risky**).
 
 ### Step 3: Make Your Choice
-- Choose one option from the event
-- Each choice shows stat changes in parentheses (e.g., "+2 Survival, -1 Humanity")
-- Choices marked with **⚠ (Risky)** have a chance to fail
+- Pick one option; each shows explicit stat changes (e.g., "+2 Survival, -1 Humanity").
 
 ### Step 4: Resolve Your Choice
-- **If your choice is risky:**
-  - Your chance of failure depends on your current stats
-  - Higher stats = lower failure chance
-  - If you fail: you lose 1 point in a related stat + gain 1 riskLevel
-  
-- **Apply stat changes** from your chosen option
-  - Stats cannot drop below 0
-  - Stats have no upper limit
-  
-- **State-driven consequences occur:**
-  - If **Humanity ≤ 3**: Lose 1 Resolve (moral weight crushes willpower)
-  - If **Resolve ≥ 8**: Gain 1 Survival (strong will helps you endure)
+- If the choice is risky, the game computes a failure chance. The implemented formula is:
+
+  `failureChance = clamp(55 - (relevantStat * 4) + (player.riskLevel * 5), 5, 65)`
+
+  - `relevantStat` is Survival for physical events, Resolve for mental events, or Humanity for moral events.
+  - `player.riskLevel` increases when the player takes risky actions and raises the failure chance.
+  - The result is clamped between 5% and 65%.
+
+- If a risky action fails:
+  - The player's `riskLevel` increments.
+  - The failure penalty subtracts **2 points** from the most relevant stat and **1 point** from Resolve, and the intended gains do not apply.
+
+- If the risky action succeeds, the listed stat changes are applied.
+
+- After applying choice effects, the game enforces stat bounds (0..15) and applies state-driven consequences:
+  - If Humanity ≤ 3: Lose 1 Resolve.
+  - If Resolve ≤ 2: Lose 1 Survival.
+  - If Resolve ≥ 12 and Humanity ≥ 8: Gain 1 Survival.
 
 ### Step 5: End Your Turn
-- The next player clockwise takes their turn
-- Play continues around the table
+- The next player takes their turn. When a player reaches the final board space the game enters endgame mode (see below).
 
 ---
 
@@ -55,90 +59,43 @@ Players journey through a 20-space board representing the voyage aboard a slave 
 
 | Stat | Meaning | Impact |
 |------|---------|--------|
-| **Survival** | Your physical endurance and will to live | Affects success in physical challenges; prevents complete despair |
-| **Humanity** | Your compassion and moral integrity | Shows whether you remain yourself; loss of it hardens your resolve but costs you emotionally |
-| **Resolve** | Your mental strength and determination | Helps you succeed in dangerous choices; a strong source of Survival |
+| **Survival** | Physical endurance | Helps resist physical penalties and survive harsh events |
+| **Humanity** | Compassion and moral integrity | Reflects the player's empathy and moral choices |
+| **Resolve** | Mental strength | Reduces failure chances for mental/risky actions and influences Survival |
 
 ---
 
-## Risky Choices
-Some choices are marked with **⚠** and indicate danger. If you choose a risky option:
+## Endgame & Winning
+- When a player reaches the final space (space 28) the game records that player as the `shore` player and enters endgame mode: every other player receives one final turn.
+- After those final turns, the game compares total scores.
 
-**Failure Chance Formula:**
-- Base failure chance: **60% − (Stat × 3%)**, minimum 10%
-- Where "Stat" is the most relevant stat (Survival for physical, Resolve for mental, Humanity for moral)
-- Examples:
-  - Survival 5 = 45% failure chance
-  - Survival 8 = 36% failure chance
-  - Survival 10 = 30% failure chance
+**Final Scoring:**
 
-**If a risky choice fails:**
-- You lose the intended stat gains
-- You lose 1 additional point from a relevant stat
-- You gain +1 to your riskLevel (tracks accumulated danger)
+```
+Total Score = Survival + Humanity + Resolve
+```
 
-**If a risky choice succeeds:**
-- You gain all the stat benefits listed
+- The `shore` player (the first to reach the final space) receives a +2 shore bonus to their score during the final comparison.
+- The player with the highest adjusted total wins. If tied, players share the victory.
 
 ---
 
-## Winning Condition
+## Important Rules & Notes
 
-### Primary Goal
-- Complete **one full lap** around the 20-space board
-- The **first player to reach Space 20 and return to Space 1** advances
-
-### Final Scoring
-- Once anyone completes one lap, the game ends
-- **Winner** = Highest combined total of the three stats:
-  ```
-  Total Score = Survival + Humanity + Resolve
-  ```
-- If tied, both players share victory
-
-### Example
-- Player A: S 12, H 7, R 11 = **30 points** ← Winner
-- Player B: S 15, H 5, R 8 = **28 points**
-
----
-
-## Important Rules
-
-✓ **Always possible:** You can always make a choice when presented with one
-✓ **Stat floor:** Stats cannot go below 0
-✓ **No stat ceiling:** Stats can grow beyond 10
-✓ **State matters:** Your past choices directly affect your future chances through your current stats
-✓ **Moral ambiguity:** No choice is objectively "good" or "bad"—only consequences
-
----
-
-## Sample Turn Example
-
-**Player 1 (Sarah) lands on Space 6:**
-
-*Event:* "You are forced to perform again, but your hands shake from hunger and fear. Push through or let it falter?"
-
-**Option A:** Force the performance (⚠ Risky) → +1 Survival, -1 Humanity, +1 Resolve
-**Option B:** Let the song falter → -1 Survival, +1 Humanity, +2 Resolve
-
-Sarah chooses **Option A (Risky)**.
-- Sarah's Survival = 8 → Failure chance = 60 − (8 × 3) = **36%**
-- Roll: 42% (fails!)
-- She loses 1 Survival, and the intended gains don't apply
-- She gains +1 riskLevel (now 1)
-
-Sarah's stats: Survival 7, Humanity 10, Resolve 10
+- Stats are clamped to a floor of 0 and a ceiling of 15.
+- The `riskLevel` influences failure chances and increases when risky choices are attempted.
+- Events and choices are deterministic text-driven outcomes; the randomness comes from die rolls and risk checks.
+- The game is intended to prompt discussion and reflection rather than competitive optimization.
 
 ---
 
 ## Game Length
-- **Typical game:** 30–50 minutes (4–8 laps per player, depending on die rolls)
-- **Shorter variant:** First to 2 laps wins
+- Typical game: 10–30 minutes (depends on die rolls and player discussion).
+- Shorter variant: First player to finish 2 full circuits wins (implement by adjusting rules, not enforced in code).
 
 ---
 
 ## Print Version Notes
-- Events are tied to specific board spaces (spaces 1–20)
-- Each event has 2–3 choice options
-- Stat changes are printed next to each choice for quick reference
-- This rule sheet fits on a single page when printed double-sided
+- Events are tied to specific board spaces (1–28).
+- Each event has 2–3 choice options with stat changes printed for quick reference.
+
