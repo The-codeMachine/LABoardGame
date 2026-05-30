@@ -850,6 +850,8 @@ function renderRoster() {
 
     card.appendChild(header);
 
+    // roster videos removed — player model will appear on the board markers
+
     const stats = [
       `Position: ${player.position + 1} / ${gameState.boardSize}`,
       `Survival: ${player.survival}`,
@@ -948,15 +950,32 @@ function renderTrack() {
 
         playersHere.forEach(player => {
 
-          const marker =
-            createElement('div', 'track-dot-player');
+          const marker = createElement('div', 'track-dot-player');
 
-          marker.style.borderColor = player.color;
-          marker.style.background = player.color;
+            marker.style.borderColor = player.color;
+            // transparent fill — video will provide the visible content
+            marker.style.background = 'transparent';
 
-          marker.title = player.name;
+            marker.title = player.name;
 
-          inner.appendChild(marker);
+            // embed a small looping muted video inside the marker
+            try {
+              const vid = document.createElement('video');
+              vid.className = 'track-dot-video';
+              vid.src = 'resources/player.mp4';
+              vid.autoplay = true;
+              vid.loop = true;
+              vid.muted = true;
+              vid.playsInline = true;
+              vid.setAttribute('aria-hidden', 'true');
+              vid.style.pointerEvents = 'none';
+              marker.appendChild(vid);
+            } catch (e) {
+              // fallback to colored outline only
+              console.warn('track marker video failed', e);
+            }
+
+            inner.appendChild(marker);
         });
 
         cell.appendChild(inner);
@@ -1087,6 +1106,10 @@ function restartGame() {
   gameState.gameActive = false;
   gameState.phase = 'idle';
   gameState.winnerIndex = null;
+  // Reset endgame-related fields so a fresh play doesn't inherit previous results
+  gameState.endgameTriggered = false;
+  gameState.shorePlayerIndex = null;
+  gameState.finalTurnsRemaining = new Set();
 }
 
 // =========================
